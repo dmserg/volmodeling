@@ -1,0 +1,7 @@
+# Visual studio specifi
+.vs
+
+# Python binaries
+*.pyc
+/.vs
+/.vs
