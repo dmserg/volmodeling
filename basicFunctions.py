@@ -2,6 +2,7 @@
 from math import sqrt
 from scipy.stats import norm
 import numpy as np
+from pylab import plot, show, grid, xlabel, ylabel, title
 
 
 def brownian(x0, n, dt, delta, out=None):
@@ -69,13 +70,89 @@ def brownian(x0, n, dt, delta, out=None):
     return out
 
 
+def geomBrownian(x0, n, dt, delta, mu, out=None):
+    """
+    Generate an instance of Brownian motion (i.e. the Wiener process):
+
+        X(t) = X(0) * exp((mu - delta**2/2) * t + N(0, delta**2 * dt))
+
+    where N(a,b; t0, t1) is a normally distributed random variable with mean a and
+    variance b.  The parameters t0 and t1 make explicit the statistical
+    independence of N on different time intervals; that is, if [t0, t1) and
+    [t2, t3) are disjoint intervals, then N(a, b; t0, t1) and N(a, b; t2, t3)
+    are independent.
+    
+
+    If `x0` is an array (or array-like), each value in `x0` is treated as
+    an initial condition, and the value returned is a numpy array with one
+    more dimension than `x0`.
+
+    Arguments
+    ---------
+    x0 : float or numpy array (or something that can be converted to a numpy array
+         using numpy.asarray(x0)).
+        The initial condition(s) (i.e. position(s)) of the Brownian motion.
+    mu : drift parameter
+    n : int
+        The number of steps to take.
+    dt : float
+        The time step.
+    delta : float
+        delta determines the "speed" of the Brownian motion.  The random variable
+        of the position at time t, X(t), has a normal distribution whose mean is
+        the position at time t=0 and whose variance is delta**2*t.
+    out : numpy array or None
+        If `out` is not None, it specifies the array in which to put the
+        result.  If `out` is None, a new numpy array is created and returned.
+
+    Returns
+    -------
+    A numpy array of floats with shape `x0.shape + (n,)`.
+    
+    Note that the initial value `x0` is not included in the returned array.
+    """
+
+    x0 = np.asarray(x0)
+    
+    # For each element of x0, generate a sample of n numbers from a
+    # normal distribution
+    r = norm.rvs(size=x0.shape + (n,), scale=delta*sqrt(dt))
+
+    # If `out` was not given, create an output array.
+    if out is None:
+        out = np.empty(r.shape)
+
+    xt_1 = x0
+    for i in range(0, n):
+        out[:,i] = xt_1 * np.exp((mu - (delta**2)/2) * dt + r[:,i])
+        xt_1 = out[:,i]
+
+    return out
+
+
+
 def getLinearDrift(n, dt, mu, driftVector = None):
+    # Builds n points for func S = mu * t with step dt
     if driftVector is None:
-        driftVector = np.empty((1, n+1))
+        driftVector = np.zeros(n)
 
     t = 0
-    for i in range(n + 1):
-        driftVector[0, i] = t * mu
+    for i in range(n):
+        driftVector[i] = t * mu
         t += dt
 
     return driftVector
+
+
+def displayCharts(m, N, dt, x, driftVector, title_text):
+    timeValues = np.linspace(0.0, N*dt, N+1)
+    for k in range(m):
+        plot(timeValues, x[k])
+
+    plot(timeValues, driftVector, '-r', label='Drift')
+    
+    title(title_text)
+    xlabel('Time', fontsize=16)
+    ylabel('S', fontsize=16)
+    grid(True)
+    show()

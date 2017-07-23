@@ -4,9 +4,9 @@ import numpy as np
 
 def main():
     # constant drift
-    nu = 1
-    # The Wiener process parameter.
-    delta = 0.2
+    mu = 1
+    # The Wiener process parameter - volatility.
+    delta = 0.8
     # Total time.
     T = 1
     # Number of steps.
@@ -14,20 +14,19 @@ def main():
     # Time step size
     dt = T/N
     # Number of realizations to generate.
-    m = 20
+    m = 50
     # Create an empty array to store the realizations.
-    x = np.zeros((m,N+1))
+    x = np.empty((m, N+1))
     # Initial values of x.
     x0 = 1
     x[:, 0] = x0
 
-    brownian(x[:,0], N, dt, delta, out=x[:,1:])
+    geomBrownian(x[:,0], N, dt, delta, mu, out=x[:,1:])
 
-    # Apply drift vector
-    driftVector = getLinearDrift(N+1, dt, nu)
-    x += driftVector
+    # Get drift values
+    driftValues = x0 * np.exp(getLinearDrift(N+1, dt, mu))
 
-    displayCharts(m, N, dt, x, driftVector + x0, 'Brownian Motion')
+    displayCharts(m, N, dt, x, driftValues, 'Geometric Brownian Motion')
 
 
 if __name__ == '__main__':
